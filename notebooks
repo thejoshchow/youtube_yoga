@@ -1,0 +1,317 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 243,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "import json\n",
+    "import pymongo\n",
+    "from pprint import pprint\n",
+    "\n",
+    "from googleapiclient.discovery import build\n",
+    "import googleapiclient.errors"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 151,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "%load_ext autoreload\n",
+    "%autoreload 2"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 34,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "client = pymongo.MongoClient()\n",
+    "db = client.yoga\n",
+    "col = db.videos"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 506,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "'id_1'"
+      ]
+     },
+     "execution_count": 506,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "col.create_index('id', unique=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 232,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "api_service_name = \"youtube\"\n",
+    "api_version = \"v3\"\n",
+    "DEVELOPER_KEY = \"AIzaSyC81m2ul4GD2VSD4259vZeB4bWjomBHAHk\""
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 255,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "youtube = build(serviceName='youtube', version='v3', developerKey=DEVELOPER_KEY)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 256,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def youtube_search(q, max_results=50, order=\"relevance\", token=None, client = youtube):\n",
+    "\n",
+    "    youtube = client\n",
+    "\n",
+    "    search_response = youtube.search().list(\n",
+    "    q=q,\n",
+    "    type=\"video\",\n",
+    "    pageToken=token,\n",
+    "    order = order,\n",
+    "    part=\"id,snippet\",\n",
+    "    maxResults=max_results,\n",
+    "\n",
+    "    ).execute()\n",
+    "\n",
+    "    videos = []\n",
+    "\n",
+    "    for search_result in search_response.get(\"items\", []):\n",
+    "        if search_result[\"id\"][\"kind\"] == \"youtube#video\":\n",
+    "            videos.append(search_result['id']['videoId'])\n",
+    "    try:\n",
+    "        nexttok = search_response[\"nextPageToken\"]\n",
+    "        return(nexttok, videos)\n",
+    "    except Exception as e:\n",
+    "        nexttok = \"last_page\"\n",
+    "        return(nexttok, videos)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 260,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def grab_videos(keyword, token=None, max_results=50):\n",
+    "    out = []\n",
+    "    while len(out) < max_results:\n",
+    "        res = youtube_search(keyword, token=token)\n",
+    "        token = res[0]\n",
+    "        videos = res[1]\n",
+    "        if videos:\n",
+    "            for vid in videos:\n",
+    "                out.append(vid)\n",
+    "            print(\"added \" + str(len(videos)) + \" videos to a total of \" + str(len(out)))\n",
+    "        else:\n",
+    "            break\n",
+    "    print(token)\n",
+    "    return out"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 261,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "added 50 videos to a total of 50\n",
+      "added 50 videos to a total of 100\n",
+      "added 50 videos to a total of 150\n",
+      "added 50 videos to a total of 200\n",
+      "CMgBEAA\n"
+     ]
+    }
+   ],
+   "source": [
+    "result = grab_videos('yoga', max_results=200)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 402,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "insert_doc = {'id': doc['items'][0]['id'], 'categoryId': doc['items'][0]['snippet']['categoryId'], 'description': doc['items'][0]['snippet']['description'], 'title': doc['items'][0]['snippet']['title'], 'tags': doc['items'][0]['snippet']['tags'], 'duration': doc['items'][0]['contentDetails']['duration'], 'commentCount': doc['items'][0]['statistics']['commentCount'], 'dislikeCount': doc['items'][0]['statistics']['dislikeCount'], 'likeCount': doc['items'][0]['statistics']['likeCount'], 'viewCount': doc['items'][0]['statistics']['viewCount']}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 466,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def video_details(videos=None, client=youtube):\n",
+    "    youtube = client\n",
+    "    for video in videos:\n",
+    "        request = youtube.videos().list(\n",
+    "            part='snippet, contentDetails, statistics',\n",
+    "            id=video\n",
+    "        )\n",
+    "        response = request.execute()\n",
+    "        insert_doc = {'id': response['items'][0]['id'], 'categoryId': response['items'][0]['snippet']['categoryId'], 'description': response['items'][0]['snippet']['description'], 'title': response['items'][0]['snippet']['title'], 'tags': response['items'][0]['snippet']['tags'], 'duration': response['items'][0]['contentDetails']['duration'], 'commentCount': response['items'][0]['statistics']['commentCount'], 'dislikeCount': response['items'][0]['statistics']['dislikeCount'], 'likeCount': response['items'][0]['statistics']['likeCount'], 'viewCount': response['items'][0]['statistics']['viewCount']}\n",
+    "        col.insert_one(insert_doc)\n",
+    "        print('{} added'.format(video))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 467,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "test = result[2:10]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 468,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "4pKly2JojMw added\n",
+      "b1H3xO3x_Js added\n",
+      "A0pkEgZiRG4 added\n",
+      "oX6I6vs1EFs added\n",
+      "v7AYKMP6rOE added\n",
+      "P2bXRROGopc added\n",
+      "eB9xNTaJJqM added\n",
+      "Yzm3fA2HhkQ added\n"
+     ]
+    }
+   ],
+   "source": [
+    "video_details(test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 490,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "cursor = col.find()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 500,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def print_test():\n",
+    "    count = col.estimated_document_count()\n",
+    "    cursor = col.find()\n",
+    "    while count:\n",
+    "        current = cursor.next()\n",
+    "        print(current['_id'])\n",
+    "        print(current['id'])\n",
+    "        print(' ')\n",
+    "        count -= 1"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 505,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "5fe3c40b48289029cf47cec2\n",
+      "sTANio_2E0Q\n",
+      " \n",
+      "5fe3c60448289029cf47cec3\n",
+      "GLy2rYHwUqY\n",
+      " \n",
+      "5fe3c6c948289029cf47cec5\n",
+      "4pKly2JojMw\n",
+      " \n",
+      "5fe3c6c948289029cf47cec6\n",
+      "b1H3xO3x_Js\n",
+      " \n",
+      "5fe3c6c948289029cf47cec7\n",
+      "A0pkEgZiRG4\n",
+      " \n",
+      "5fe3c6c948289029cf47cec8\n",
+      "oX6I6vs1EFs\n",
+      " \n",
+      "5fe3c6c948289029cf47cec9\n",
+      "v7AYKMP6rOE\n",
+      " \n",
+      "5fe3c6c948289029cf47ceca\n",
+      "P2bXRROGopc\n",
+      " \n",
+      "5fe3c6c948289029cf47cecb\n",
+      "eB9xNTaJJqM\n",
+      " \n",
+      "5fe3c6c948289029cf47cecc\n",
+      "Yzm3fA2HhkQ\n",
+      " \n"
+     ]
+    }
+   ],
+   "source": [
+    "print_test()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.7"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}

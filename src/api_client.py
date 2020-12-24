@@ -8,9 +8,9 @@ class youtube():
         self.query = query
 
     def get_video_ids(self, token=None):
-        '''
-        Returns nextPageToken and videoIds of first page of query with search() function of youtube api
-        '''
+
+        # Returns nextPageToken and videoIds of first page of query with search() function of youtube api
+
         search_response = self.youtube_api.search().list(
             q=self.query,
             type='video',
@@ -34,9 +34,9 @@ class youtube():
             return(nexttok, videos)
 
     def grab_videos(self, token=None, max_results=10000):
-        '''
-        Returns full list of all query items
-        '''
+    
+        # Returns full list of all query items
+    
         out = []
         while len(out) < max_results:
             res = self.get_video_ids(token)
@@ -51,9 +51,9 @@ class youtube():
         return out
 
     def video_details(self, video):
-        '''
-        video() method of youtube api returns video metadata for list from grab_videos method
-        '''
+
+        # video() method of youtube api returns video metadata for list from grab_videos method
+
         request = self.youtube_api.videos().list(
             part='snippet, contentDetails, statistics',
             fields = 'items(contentDetails(duration), id, snippet(categoryId, title, description, channelTitle, tags), statistics(commentCount, dislikeCount, likeCount, viewCount))',
@@ -109,10 +109,11 @@ if __name__ == '__main__':
     query6 = ['mindfulness yoga', 'breathwork', 'mindful yoga']
     query7 = ['breathwork yoga', 'restorative yin', 'yoga flow']
 
-    toss_query = ['pilates yoga', 'nidra']
+    # single list of queries if you are not limited by api call quota
+    queries = query1 + query2 + query3 + query4 + query5 + query6 + query7
 
-    # test_query = ['np0c-WP8ocE', 'XGr6PICjQz8', 'yEExEFGVCk8', 'Rl42wr9hkPE', 'eCQlyDLsp9Y']
+    # test_5 = ['np0c-WP8ocE', 'XGr6PICjQz8', 'yEExEFGVCk8', 'Rl42wr9hkPE', 'eCQlyDLsp9Y']
 
-    for query in query6:
+    for query in queries:
         main = youtube(youtube_api, query)
         main.main()

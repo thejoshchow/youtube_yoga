@@ -33,7 +33,7 @@ class youtube():
     def grab_videos(self, token=None, max_results=10000):
         out = []
         while len(out) < max_results:
-            res = self.get_video_ids(self.query, token=token)
+            res = self.get_video_ids(token)
             token = res[0]
             videos = res[1]
             if videos:
@@ -44,10 +44,37 @@ class youtube():
                 break
         return out
 
+    def video_details(self):
+        print(f'Searching youtube for {self.query}')
+        videos = self.grab_videos()
+        print(f'Adding {len(videos)} videos to database')
+        count = 0
+        for video in videos:
+            request = self.youtube_api.videos().list(
+                part='snippet, contentDetails, statistics',
+                fields = 'items(contentDetails(duration), id, snippet(categoryId, title, description, channelTitle), statistics(commentCount, dislikeCount, likeCount, viewCount))',
+                id=video
+            ).execute()
+            try:
+                col.insert_one(request['items'][0])
+                print(f'{video} added')
+                count += 1
+            except pymongo.errors.DuplicateKeyError:
+                continue
+        print(f'Script complete: {count} videos added.')
+
+    def test(self):
+        one_result = col.find_one()
+        print(f'From MongoDB: {one_result}')
+        test, test_result = self.get_video_ids()
+        print(f'Test token: {test}')
+        print(f'Test query response: {test_result}')
+
+
 if __name__ == '__main__':
     api_service_name = "youtube"
     api_version = "v3"
-    DEVELOPER_KEY = "AIzaSyBXc0Ys9HG9uc0w-h6d3bkWxR6o8AMfeAo"
+    DEVELOPER_KEY = input('API key: ')
     youtube_api = build(serviceName=api_service_name, version=api_version, developerKey=DEVELOPER_KEY)
 
     #connect to MongoDB client and create database and collection
@@ -55,6 +82,7 @@ if __name__ == '__main__':
     db = client.yoga
     col = db.videos
 
-    query = 'insert-search-query'
+    query = 'yin yoga'
 
-    main()
+    youtube = youtube(youtube_api, query)
+    youtube.video_details()

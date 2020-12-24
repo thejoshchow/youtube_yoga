@@ -6,14 +6,8 @@ client = MongoClient()
 db = client.yoga
 col = db.videos
 
-api_service_name = "youtube"
-api_version = "v3"
-DEVELOPER_KEY = "AIzaSyC81m2ul4GD2VSD4259vZeB4bWjomBHAHk"
-
-youtube = build(serviceName='youtube', version='v3', developerKey=DEVELOPER_KEY)
-
 # function for youtube search
-def youtube_search(q, max_results=50, order="relevance", token=None, client=youtube):
+def youtube_search(q, max_results=50, order="relevance", token=None, client=None):
 
     youtube = client
 
@@ -43,7 +37,7 @@ def youtube_search(q, max_results=50, order="relevance", token=None, client=yout
 def grab_videos(keyword, token=None, max_results=50):
     out = []
     while len(out) < max_results:
-        res = youtube_search(keyword, token=token)
+        res = youtube_search(keyword, client=None, token=token)
         token = res[0]
         videos = res[1]
         if videos:
@@ -55,7 +49,7 @@ def grab_videos(keyword, token=None, max_results=50):
     print(token)
     return out
 
-def video_details(videos=None, client=youtube):
+def video_details(videos, client=None):
     youtube = client
     for video in videos:
         try:
@@ -68,8 +62,19 @@ def video_details(videos=None, client=youtube):
             col.insert_one(insert_doc)
             print('{} added'.format(video))
         except:
-            print(f'Failed videoId: {video}')
+            continue
+
+def test(id, client=None):
+    youtube = client
+    query = youtube.videos().list(
+        part='contentDetails', id=id)
+    response = query.execute()
+    return response
 
 if __name__ == '__main__':
-    videos = grab_videos('yoga', max_results=1000)
-    video_details(videos)
+    key = input('YouTube API key: ')
+    print(key)
+    youtube = build(serviceName='youtube', version='v3', developerKey=key)
+    # videos = grab_videos('yoga', max_results=1000, client=youtube)
+    # video_details(videos, client=youtube)
+    print(test('4pKly2JojMw', client=youtube))

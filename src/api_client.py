@@ -96,7 +96,7 @@ if __name__ == '__main__':
     DEVELOPER_KEY = input('API Key: ')
     youtube_api = build(serviceName=api_service_name, version=api_version, developerKey=DEVELOPER_KEY)
 
-    #connect to MongoDB client and create database and collection
+    # connect to MongoDB client and create database and collection
     client = pymongo.MongoClient()
     db = client.yoga
     col = db.final

@@ -1,80 +1,60 @@
+import pymongo
 from googleapiclient.discovery import build
 import googleapiclient.errors
-from pymongo import MongoClient
 
-client = MongoClient()
-db = client.yoga
-col = db.videos
+class youtube():
+    def __init__(self, youtube_api, query):
+        self.youtube_api = youtube_api
+        self.query = query
 
-# function for youtube search
-def youtube_search(q, max_results=50, order="relevance", token=None, client=None):
-
-    youtube = client
-
-    search_response = youtube.search().list(
-    q=q,
-    type="video",
-    pageToken=token,
-    order = order,
-    part="id,snippet",
-    maxResults=max_results,
-    ).execute()
-
-    videos = []
-
-    for search_result in search_response.get("items", []):
-        if search_result["id"]["kind"] == "youtube#video":
-            videos.append(search_result['id']['videoId'])
-    try:
-        nexttok = search_response["nextPageToken"]
-        return(nexttok, videos)
-    except Exception as e:
-        print(e.message)
-        nexttok = "last_page"
-        return(nexttok, videos)
-
-# create list of video ids associated with query
-def grab_videos(keyword, token=None, max_results=50):
-    out = []
-    while len(out) < max_results:
-        res = youtube_search(keyword, client=None, token=token)
-        token = res[0]
-        videos = res[1]
-        if videos:
-            for vid in videos:
-                out.append(vid)
-            print("added " + str(len(videos)) + " videos to a total of " + str(len(out)))
-        else:
-            break
-    print(token)
-    return out
-
-def video_details(videos, client=None):
-    youtube = client
-    for video in videos:
+    def get_video_ids(self, token=None):
+        search_response = self.youtube_api.search().list(
+            q=self.query,
+            type='video',
+            pageToken=token,
+            order='relevance',
+            part='id, snippet',
+            fields='nextPageToken,items(id(videoId),snippet(title))',
+            relevanceLanguage='en',
+            maxResults=50
+            ).execute()
+        
+        videos = []
+        
+        for search_result in search_response.get('items', []):
+            videos.append([search_result['id']['videoId'], search_result['snippet']['title']])
         try:
-            request = youtube.videos().list(
-                part='snippet, contentDetails, statistics',
-                id=video
-            )
-            response = request.execute()
-            insert_doc = {'id': response['items'][0]['id'], 'categoryId': response['items'][0]['snippet']['categoryId'], 'description': response['items'][0]['snippet']['description'], 'title': response['items'][0]['snippet']['title'], 'tags': response['items'][0]['snippet']['tags'], 'duration': response['items'][0]['contentDetails']['duration'], 'commentCount': response['items'][0]['statistics']['commentCount'], 'dislikeCount': response['items'][0]['statistics']['dislikeCount'], 'likeCount': response['items'][0]['statistics']['likeCount'], 'viewCount': response['items'][0]['statistics']['viewCount']}
-            col.insert_one(insert_doc)
-            print('{} added'.format(video))
+            nexttok = search_response['nextPageToken']
+            return(nexttok, videos)
         except:
-            continue
+            nexttok = 'last_page'
+            return(nexttok, videos)
 
-def test(id, client=None):
-    youtube = client
-    query = youtube.videos().list(
-        part='contentDetails', id=id)
-    response = query.execute()
-    return response
+    def grab_videos(self, token=None, max_results=10000):
+        out = []
+        while len(out) < max_results:
+            res = self.get_video_ids(self.query, token=token)
+            token = res[0]
+            videos = res[1]
+            if videos:
+                for vid in videos:
+                    out.append(vid)
+                print("added " + str(len(videos)) + " videos to a total of " + str(len(out)))
+            else:
+                break
+        return out
 
 if __name__ == '__main__':
-    key = input('YouTube API key: ')
-    print(key)
-    youtube = build(serviceName='youtube', version='v3', developerKey=key)
-    # videos = grab_videos('yoga', max_results=1000, client=youtube)
-    # video_details(videos, client=youtube)
-    print(test('4pKly2JojMw', client=youtube))
+    api_service_name = "youtube"
+    api_version = "v3"
+    DEVELOPER_KEY = "AIzaSyBXc0Ys9HG9uc0w-h6d3bkWxR6o8AMfeAo"
+    youtube_api = build(serviceName=api_service_name, version=api_version, developerKey=DEVELOPER_KEY)
+
+    #connect to MongoDB client and create database and collection
+    client = pymongo.MongoClient()
+    db = client.yoga
+    col = db.videos
+
+    query = 'insert-search-query'
+
+    main()

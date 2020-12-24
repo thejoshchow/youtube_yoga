@@ -31,4 +31,4 @@ def split_columns(data):
 if __name__ == '__main__':
     data = '../data/yoga_uncleaned.json'
     new_df = split_columns(data)
-    new_df.to_csv('../data/')
+    new_df.to_csv('../data/yoga.csv')

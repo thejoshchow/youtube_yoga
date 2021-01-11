@@ -9,20 +9,16 @@ import re
 from nltk.corpus import stopwords
 from nltk.stem.wordnet import WordNetLemmatizer
 
-from collections import defaultdict
-from gensim import corpora
-import gensim
-
 class cleaner():
-    def __init__(self, data_path):
-        self.df = pd.read_csv(data_path)
+    def __init__(self):
 
         # punctuation and stopwords
         self.punctuation = set(string.punctuation)
         self.stop_words = stopwords.words('english')
+        yoga_stopwords = ['yoga', 'music', 'minute', 'min', 'music', 'teach', 'practice', 'song', 'class', 'playlist', 'none', 'facebook', 'instagram', 'online', 'web', 'exercise', 'video', 'workout', 'free', 'program', 'body', 'full', 'day', 'sound', 'channel', 'pose', 'de', 'fitness', 'kid', 'teacher' ,'series', 'life']
+        self.stop_words.extend(yoga_stopwords)
 
         # LDA
-        self.dictionary = corpora.Dictionary()
         self.lem = WordNetLemmatizer()
 
     def take_head(self, text):
@@ -60,16 +56,9 @@ class cleaner():
         text = self.remove_stopwords(text)
         return text
 
-    def main(self):
-        self.df['description'].apply(self.take_head)
-        self.df['description'].fillna('none', inplace=True)
-        self.df['tags'].fillna('none', inplace=True)
-        channel_stop = list(self.df['channelTitle'].unique())
-        self.stop_words.extend(channel_stop)
-        columns = ['title', 'description', 'tags']
-        for column in columns:
-            self.df[column] = self.df[column].apply(self.clean_text)
-        self.df['text'] = self.df['title'].apply(str.split) + self.df['description'].apply(str.split) + self.df['tags'].apply(str.split)
-
 if __name__ == '__main__':
+    # df = pd.read_csv('../data/yoga.csv')
+    # cleaner = cleaner()
+    # df['description'].fillna('none', inplace=True)
+    # df['description'].apply(cleaner.take_head)
     pass

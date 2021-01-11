@@ -38,10 +38,7 @@ class predict():
         top_10 = [(doc_position, doc_score) for doc_position, doc_score in sims[0:10]]
         vid_ids = [self.df.iloc[index[0]]['id'] for index in top_10]
         links = [f'https://www.youtube.com/watch?v={id}' for id in vid_ids]
-        return sims
-
-    def filter_duration(self):
-        df
+        return links
 
 def main():
     query = (input('what type of yoga are you looking for? '), input('duration: ')

@@ -22,6 +22,7 @@ class model():
         self.cleaned_df = self.clean_df()
         self.dictionary, self.corpus = self.create_dictionary()
         self.lda = self.create_model()
+        self.index = self.build_index()
 
     def clean_df(self):
         self.df['description'].fillna('none', inplace=True)
@@ -51,6 +52,10 @@ class model():
         lda = models.LdaMulticore(self.corpus, id2word=self.dictionary, num_topics=12, passes=50)
         return lda
 
+    def build_index(self):
+        index = similarities.MatrixSimilarity(self.lda[self.corpus])
+        return index
+
 if __name__ == '__main__':
     data_path = '../data/yoga.csv'
     model = model(data_path)
@@ -60,3 +65,4 @@ if __name__ == '__main__':
         pickle.dump(model.dictionary, fp)
     with open('../app/model_data/corpus', 'wb') as fp:
         pickle.dump(model.corpus, fp)
+    model.index.save('../app/model_data/index')

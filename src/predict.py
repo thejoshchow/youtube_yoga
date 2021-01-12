@@ -41,7 +41,7 @@ class predict():
         return links
 
 def main():
-    query = (input('what type of yoga are you looking for? '), input('duration: ')
+    query = (input('what type of yoga are you looking for? ')
     out = predict(query)
     print(out.vid_ids())
         

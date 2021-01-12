@@ -1,66 +1,33 @@
-from math import sqrt
 from flask import Flask, render_template, request, jsonify
 import pandas as pd
-import os,sys,inspect
 
-current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-#parent_dir = os.path.dirname(current_dir)
-#sys.path.insert(0, parent_dir) 
-import sparkrecommender
+from model_data.predict import predict
+
 app = Flask(__name__)
 
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index1.html')
+    return render_template('home.html')
 
 
 @app.route('/recommend', methods=['POST'])
 def recommend():
     user_data = request.json
-    style, duration, intensity = user_data['style'], user_data['duration'], user_data['intensity']
-    vid_list = _recommend_movie(style, duration, intensity)
+    style = user_data['style']
+    vid_list = _recommend_vid(style)
     return jsonify({'result': vid_list})
 
-def _recommend_vid(style, duration, intensity):
-    """Generate recommended movies as a list of list. Each pair follows the pattern [movie_id, movie_name]
-    Args:
-        user_id (int): user id
-        movie_id (int): movie_id that the user watched
-        number_movies (int): number of movies to return
-    Returns:
-        a list of list. Each follows the pattern [movie_id, movie_name, movie_poster_url]
-    """
-    #get the recommended movie ids from pickled model
-    rec_movies = sparkrecommender.movie_recomendation(style,duration,intensity)
-    #get a list of movies ids used in model
-    yoga = pd.read_csv('yoga.csv',index_col='id')
-    
-    #build list of lists with [[imdb ID, movie title, post img link]]
-    rec_movies_list = []
-    for movie_id in rec_movies:
-        temp_list = []
-        imdbid_ = str(get_imdbId(movie_id))
-        temp_list.append(imdbid_)
-        temp_list.append(moviesdf.loc[movie_id,'title'])
-        temp_list.append('http://img.omdbapi.com/?apikey=ae550a04&i=tt'+str(imdbid_))
-        rec_movies_list.append(temp_list)
-    return rec_movies_list
+def _recommend_vid(style):
+    user_data = request.json
+    style = user_data['style']
+    data = predict(style)
+    # return jsonify({'result': game_list})
+    data = data.values.tolist()
+    return render_template('recommend.html')
 
-def get_imdbId(movieIds):
-    #if given a list of movie IDs, returns a list of corresponding imdbIDs
-    #if given one movie ID, returns the corresponding IMDB ID
-    linksdf = pd.read_csv('links.csv',index_col='movieId',dtype=str)
-    # if type(movieIds)==list:
-    #     imdbIds = []
-    #     for id_ in movieIds:
-    #         imdbIds.append(linksdf.loc[id_,'imdbId'])
-    # elif type(movieIds)==str:
-    imdbIds = linksdf.loc[movieIds,'imdbId']
-    # else:
-    #     pass
-    print(imdbIds)
-    return imdbIds
+def func():
+    pass
 
 
 if __name__ == '__main__':

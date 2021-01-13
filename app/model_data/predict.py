@@ -23,13 +23,13 @@ class predict():
         sims = self.index[self.query_vector]
         return sims
 
-    # def vid_embed(self):
-    #     sims = self.get_similarities()
-    #     sims = sorted(enumerate(sims), key=lambda item: -item[1])
-    #     ids = [(doc_position, doc_score) for doc_position, doc_score in sims[0:9]]
-    #     vid_ids = [self.df.iloc[index[0]]['id'] for index in ids]
-    #     links = [f'https://www.youtube.com/watch?v={id}' for id in vid_ids]
-    #     return embed_table
+    def vid_embed(self):
+        sims = self.get_similarities()
+        sims = sorted(enumerate(sims), key=lambda item: -item[1])
+        ids = [(doc_position, doc_score) for doc_position, doc_score in sims[0:9]]
+        vid_ids = [self.df.iloc[index[0]]['id'] for index in ids]
+        links = [[f'<iframe width="560" height="315" src="https://www.youtube.com/embed/{id}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>'] for id in vid_ids]
+        return links
 
     def vid_table(self):
         sims = self.get_similarities()
@@ -39,7 +39,7 @@ class predict():
         to_html = pd.DataFrame(columns=self.df.columns)
         for id in ids:
             to_html = to_html.append(self.df.iloc[id[0]])
-        heading = ['title', 'description', 'id']
+        heading = ['title', 'id']
         for i in to_html.columns:
             if i not in heading:
                 to_html.drop(columns=i, inplace=True)

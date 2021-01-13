@@ -56,15 +56,11 @@ Released   : 20140228
             </select> -->
         </div>
 		<ul class="actions">
-			<button id="recommend">Go!</button>
+			<a href="#" class="button" id="recommend">Go!</a>
 		</ul>
 	</div>
 </div>
-
-<div id="videos">
-	<div id="result">
-	</div>
-</div>
+<div id="result"></div>
 <div id="copyright" class="container">
 	<p>&copy; Untitled. All rights reserved. | Photos by <a href="http://fotogrph.com/">Fotogrph</a> | Design by <a href="http://templated.co" rel="nofollow">TEMPLATED</a>.</p>
 </div>
@@ -94,7 +90,7 @@ Released   : 20140228
     };
 
     $(document).ready(function () {
-        $("button#recommend").click(function () {
+        $("a#recommend").click(function () {
             let query = get_input();
             send_query_json(query);
         });

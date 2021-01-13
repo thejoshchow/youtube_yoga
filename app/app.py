@@ -17,11 +17,12 @@ def recommend():
     return result_table
 
 def _recommend_vid(yoga):
-    headings = ['Link', 'Title', 'Description']
+    headings = ['Link', 'Title']
     model = predict(yoga)
+    # data = model.vid_embed()
     data = model.vid_table()
     data = data.values.tolist()
     return render_template('recommend.html', headings=headings, data=data)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    app.run(host='0.0.0.0', port=8000, debug=True) 

@@ -195,7 +195,7 @@
 	
 	.box1,
 	.box2,
-	.box3,
+	.box3
 	{
 		float: left;
 		margin-right: 20px;
@@ -512,14 +512,4 @@
 	{
 		text-align: center;
 		color: rgba(0,0,0,.5);
-	}
-
-	div .table {
-		text-align:center;
-		margin: auto;
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		margin-right: -50%;
-		transform: translate(-50%, -50%) 
 	}

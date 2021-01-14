@@ -1,3 +1,6 @@
 .ipynb_checkpoints
 data_collection.ipynb
 .DS_Store
+.vscode
+__pycache__
+img

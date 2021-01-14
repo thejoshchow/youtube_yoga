@@ -1,0 +1,16 @@
+<table id="results_table_detail">
+	<tr>
+		{% for heading in headings %}
+		<th> {{ heading }} </th>
+		    {% endfor %}
+	</tr>
+	{% for row in data %}
+	<tr>
+		{% for cell in row %}
+		<td>
+			{{ cell }}
+		</td>
+		{% endfor %}
+	</tr>
+	{% endfor %}
+</table>
